@@ -1,0 +1,22 @@
+{
+  "id": "sanjay0614/casmi26-v17-leader-safe-mid-035",
+  "title": "CASMI26 V17 Leader Safe Mid 035",
+  "code_file": "casmi26-v17-neural-rerank.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": false,
+  "dataset_sources": [
+    "dmitriigluzdov/casmi26-fold-safe-fpnet",
+    "dmitriigluzdov/casmi26-natural-product-knowledge-table",
+    "dmitriigluzdov/casmi26-natural-product-panel-benchmark",
+    "dmitriigluzdov/casmi26-pubchem-popularity-prior",
+    "dmitriigluzdov/casmi26-attributed-v4g-reproduction-assets",
+    "sanpier/casmi-spectrum-model-v1"
+  ],
+  "competition_sources": [
+    "enveda-CASMI26-molecule-id-mass-spectra"
+  ]
+}
