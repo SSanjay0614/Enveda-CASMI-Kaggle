@@ -1,0 +1,24 @@
+{
+  "id": "sanjay0614/casmi26-v22-consensus-neural-rescue",
+  "title": "CASMI26 V22 Consensus Neural Rescue",
+  "code_file": "casmi26-v22-consensus-rescue.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": false,
+  "dataset_sources": [
+    "sanpier/casmi-spectrum-model-v1",
+    "dmitriigluzdov/casmi26-fold-safe-fpnet",
+    "dmitriigluzdov/casmi26-natural-product-knowledge-table",
+    "dmitriigluzdov/casmi26-natural-product-panel-benchmark",
+    "dmitriigluzdov/casmi26-pubchem-popularity-prior",
+    "dmitriigluzdov/casmi26-attributed-v4g-reproduction-assets",
+    "sanpier/catalogue-experiment-saner"
+  ],
+  "competition_sources": [
+    "enveda-CASMI26-molecule-id-mass-spectra"
+  ],
+  "machine_shape": "NvidiaTeslaT4"
+}
