@@ -278,3 +278,51 @@ What each competition is waiting for:
   CPU run does not fit the 9 h limit and would score near 0.48 anyway, so it is not an option.
 
 Nothing above retracts earlier content in this file. It only records the current pause.
+
+---
+
+## 2026-10-27 — no activity from this session
+
+Not worked on today. No submission, no kernel push, no local run. The GPU quota is committed to
+ARC-AGI-3 until 2026-10-31, so this competition is queued behind that date; the plan below is
+unchanged. Recorded here only so the gap in the daily log is explained rather than looking like an
+oversight.
+
+## Nov 1, 2026 score audit
+
+Kaggle's submission listing now shows V21 at **0.477** (`57829820`), followed by four completed
+variants at **0.465** each: V22 (`57831425`), V23 (`57831786`), V24 (`57831900`), and V25
+(`57832621`). The later candidates did not beat the V21 anchor.
+
+The notebook comparison confirms V21 and V25 share `w_top=0.25` and `w_mid=0.75`; V21 uses
+`rescue=0`, while V25 uses `rescue=1`. V22-V25 also share a refactor of the fast-commit execution
+guard. The intended scoring path sets `RUN_PIPELINE=True` when the hidden-test signature differs
+from the visible fixture or Kaggle marks a competition rerun, but the available fast-commit logs do
+not independently prove the mode used during each scored rerun. Do not attribute the entire score
+change to weight/rescue alone until that path and the mounted inputs are confirmed.
+
+**Next experiment:** preserve V21 as the control. First verify from the Kaggle scoring-run logs that
+V22-V25 executed the complete pipeline and used the same mounted dataset versions and model inputs.
+Then reproduce V21/V22-V25 on identity-disjoint folds, measuring paired MRR@25, truth-in-top-25
+recall, and changed rows by scenario. Do not select or submit another weight/rescue tweak based on
+the 250-molecule panel or public leaderboard alone. If full-run evidence cannot be recovered, build
+a controlled validation notebook with identical pinned inputs and an explicit scoring-mode assertion
+before spending a submission.
+
+Kaggle reported **five attempts remaining today**. No Nov 1 Enveda attempt has been used.
+
+### Nov 1 candidate run
+
+Built V26 from the best confirmed V21 pipeline, changing only `w_mid` from 0.75 to 0.70 while
+retaining `w_top=0.25`, the fragment-gated rank-1 rule, and `rescue=0`. Kaggle kernel
+`sanjay0614/casmi26-v26-consensus-wmid070` version 1 completed successfully and produced a
+400-row, schema-validated `submission.csv`; the fast-commit log explicitly states it copied the
+sample file and skipped the full pipeline. Submitted V26 as `57874984`, currently pending; Kaggle
+reruns the notebook on hidden spectra for the scored evaluation. One of today's five Enveda attempts
+is used; four remain.
+
+All five Nov 1 attempts are used: V26 (`57874984`), V27 (`57875202`, `57875355`), and V28
+(`57875205`, `57875357`). V27 and V28 were each submitted twice; each pair targets the same kernel
+version and is a duplicate. All five are pending and the daily quota reports zero remaining.
+V27/V28 preview outputs each had 400 unique molecule IDs and the expected two-column schema.
+V29 (`w_mid=0.80`) and V30 (`w_top=0.00`) were not submitted.

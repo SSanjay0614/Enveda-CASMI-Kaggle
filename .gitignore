@@ -5,8 +5,16 @@ __pycache__/
 
 # Kaggle downloaded run outputs & temporary logs
 kernel_output/
+**/output/
+**/kaggle_output*/
 *.log
 numba_cache/
 .ipynb_checkpoints/
 */.ipynb_checkpoints/
 error_log/
+
+# Local experiments and generated submission artifacts
+scratch/
+submission.csv
+baseline_submission.csv
+candidate_audit.csv

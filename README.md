@@ -25,7 +25,7 @@ An elite, multi-engine competitive machine learning repository developed for the
 | **V4.0** | `v4.0` | Lineage B: N1 Challenger Architecture | `0.457` | Proxy GLACIER simulation with N1 adduct handling; slightly lower top-1 hit rate compared to Lineage A. |
 | **V5.0** | `v5.0` | Master Cross-Lineage Ensemble | `0.460` | RRF blending of Lineage A and Lineage B diluted high-confidence top-1 answers where one model had direct evidence. |
 | **V6.0** | `v6.0` | Dual-Gated Loose PubChem Merge (`dg-gate-loose`) | **`0.464`** | Kaggle submission `57581695`; the claimed `0.497` in the upstream notebook tag is not our score. |
-| **V7.0** | `v7.0` | Candidate-Aware PubChem Promotion | **`0.465`** | Submission `57581596`; best confirmed local score. Promotion uses the current PubChem leader's own evidence. |
+| **V7.0** | `v7.0` | Candidate-Aware PubChem Promotion | **`0.465`** | Submission `57581596`; early confirmed baseline. Promotion uses the current PubChem leader's own evidence. |
 | **V8.0** | `v8.0` | Candidate-Aware Loose Promotion | **`0.465`** | Submission `57582145`; relaxed candidate-specific thresholds tied V7, no demonstrated gain. |
 | **V9.0** | `v9.0` | Apex Supreme Consensus | **`0.464`** | Submission `57582485`; combined prior/gate/shield changes did not improve on V7/V8. |
 | **V10.0** | `v10.0` | Unified Frontier Master | **`0.464`** | Submission `57590094`; code still used window-level relative evidence in two promotion branches, despite computing candidate evidence. |
@@ -33,6 +33,27 @@ An elite, multi-engine competitive machine learning repository developed for the
 | **V12.0** | `v12.0` | V7 + Neural Candidate-Only Rerank | **`0.465`** (`57619742`) | Tied V7/V8; candidate-preserving neural rerank did not improve the public score. |
 | **V13.0** | `v13.0` | V7 Evidence Gate + Candidate-Aware Early Slots | **`0.465`** (`57631787`) | Controlled V7 branch; visible smoke run processed 12 molecules and retained baseline placeholders for 388. |
 | **V14.0** | `v14.0` | Stronger Candidate Evidence Gate + Early Slots | **`0.465`** (`57631794`) | Controlled V7 branch; visible smoke run processed 12 molecules and retained baseline placeholders for 388. |
+| **V15.0** | `v15.0` | Neural RRF Offset 1 | **`0.467`** (`57667149`) | RRF offset 1 improved candidate discrimination. |
+| **V16.0** | `v16.0` | Leader-Safe Middle Weight 0.50 | **`0.468`** (`57667157`) | Protected leader with 0.50 middle weight reranking. |
+| **V17.0** | `v17.0` | Leader-Safe Middle Weight 0.35 | **`0.467`** (`57668444`) | Conservative middle weight reranking. |
+| **V18.0** | `v18.0` | Leader-Safe Middle Weight 1.00 | **`0.470`** (`57668919`) | Stronger neural reranking yielded previous best confirmed local score. |
+| **V19.0** | `v19.0` | Leader-Safe Neural Rerank + Offset 1 | **`0.466`** (`57669437`) | Offset 1 with aggressive reranking overfit early candidate ranks. |
+| **V21.0** | `v21.0` | Dual-472 Consensus Merge | **0.477** (`57829820`) | Highest confirmed score; fragment-gated V2 order plus neural rerank. |
+| **V22.0** | `v22.0` | Consensus Neural Tail Rescue (`w_mid=0.80`, `rescue=2`) | **0.465** (`57831425`) | Below V21. |
+| **V23.0** | `v23.0` | Tuned Middle Weight `w_mid=0.775` | **0.465** (`57831786`) | Below V21. |
+| **V24.0** | `v24.0` | Bold Middle Weight `w_mid=0.85` | **0.465** (`57831900`) | Below V21. |
+| **V25.0** | `v25.0` | Conservative Single Tail Rescue `rescue=1` | **0.465** (`57832621`) | Below V21. |
+| **V26.0** | `v26.0` | Conservative `w_mid=0.70`, no tail rescue | **Pending** (`57874984`) | Controlled from V21; score pending. |
+| **V27.0** | `v27.0` | `w_mid=0.65`, no tail rescue | **Pending** (`57875202`, `57875355`) |
+| **V28.0** | `v28.0` | `w_mid=0.60`, no tail rescue | **Pending** (`57875205`, `57875357`) |
+| **V29.0** | `v29.0` | `w_mid=0.80`, no tail rescue | Planned for Nov 1 scoring |
+| **V30.0** | `v30.0` | `w_top=0.00`, `w_mid=0.75`, no tail rescue | Planned for Nov 1 scoring |
+
+V21 remains the current best confirmed public score at **0.477**. V22-V25 all scored **0.465**;
+see the Nov 1 audit in [action_plan.md](./action_plan.md) before choosing another candidate.
+
+All five Nov 1 attempts are used. V27 and V28 were each submitted twice; the second submission
+followed the first and duplicated its kernel/version. The four refs remain pending.
 
 ---
 
