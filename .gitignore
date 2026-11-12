@@ -18,3 +18,11 @@ scratch/
 submission.csv
 baseline_submission.csv
 candidate_audit.csv
+
+# Local competition datasets and public kit bundle
+data/
+kit/
+*.zip
+
+# Downloaded kernel output (regenerated locally)
+out_*/
