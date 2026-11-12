@@ -1,0 +1,18 @@
+{
+  "id": "sanjay0614/casmi26-scorer-big-c",
+  "title": "CASMI26 scorer big c",
+  "code_file": "main.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": false,
+  "dataset_sources": [
+    "sanpier/casmi-spectrum-model-v1",
+    "metric/rdkit-2026-3-3-wheel"
+  ],
+  "kernel_sources": [],
+  "competition_sources": ["enveda-CASMI26-molecule-id-mass-spectra"],
+  "model_sources": []
+}
