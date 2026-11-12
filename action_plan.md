@@ -326,3 +326,264 @@ All five Nov 1 attempts are used: V26 (`57874984`), V27 (`57875202`, `57875355`)
 version and is a duplicate. All five are pending and the daily quota reports zero remaining.
 V27/V28 preview outputs each had 400 unique molecule IDs and the expected two-column schema.
 V29 (`w_mid=0.80`) and V30 (`w_top=0.00`) were not submitted.
+
+---
+
+## 2026-11-02 - pivot from weight tweaks to reproducing the best public recipe
+
+The V21-V28 ladder settled the local question: `w_mid` 0.70 is the optimum and everything from
+0.60 to 1.00 lands at 0.476-0.477, i.e. board noise. The incumbent stays **0.477** (`57874984`,
+V26). Further weight moves are not worth a slot.
+
+What the board offers above that is a reproduction, not a new model. The public ceiling is
+**0.480**, reached two ways:
+
+- `alexchilton/casmi26-lb-0-480-neural-ensemble`, which is bgunshui's *CASMI26 480 neural
+  ensemble* run verbatim. It adds a second spectrum-to-structure model (trained by the public
+  kernel `bgunshui/casmi26-scorer-train-public`) and orders ranks 2-25 by
+  `0.5*z(public neural) + 0.5*z(retrained neural)`; rank 1 keeps the leader-safe decision.
+  Measured 0.480 on alexchilton's account, 0.479 for its midx base.
+- `flexonafft/casmi26-closing-the-evidence-gap` v6, which reaches the same layer from
+  busyaprime's m1 merge with a different second model (Ahmed Berat Ozer's long-schedule model).
+
+Five kernels were built verbatim from public sources, each keeping its own metadata (dataset,
+kernel and model attachments) and only changing id/title/private flag:
+`kernel_v31` (0.480 ensemble), `kernel_v32` (midx 0.479 base), `kernel_v33` (flexon v6),
+`kernel_v35` (ndaedzomukhuba 3-model: public + ours + long, equal-weight z-score), `kernel_v36`
+(guhongbin 75/25 public/ours reweight). All commit runs complete and produce a 400-row,
+two-column `submission.csv`; the scoring rerun runs the full pipeline.
+
+Five submissions made: `57906786` (v31), `57907627` (v32), `57907630` (v33), plus v35 and v36,
+all pending at time of writing.
+
+**Read this day correctly.** The expected gain over 0.477 is about +0.003, not +0.04. The board
+leader is at 0.521 and no public notebook is above 0.480; the 0.04 gap is not a knob and will not
+close by re-running public recipes. If none of today's five beats 0.477, the conclusion is that
+0.480-class recipes do not transfer to our reruns, and the next real step is a candidate-generation
+change (better library/decoy coverage at ranks 1-3), not more rank fusion.
+
+---
+
+## 2026-11-10 - the ceiling moved to 0.487; buy scorer quality, not knobs
+
+Board state today: first place 0.540, second 0.539, then 0.534 / 0.526, and the public-notebook
+ceiling is **0.487** (`alexchilton`, `guhongbin` v589, `heliosli` 0.486, `ozertuu` 0.485).
+We sit at 0.480 (`kernel_v31`), rank ~800 of 5075 teams. A 0.487 reproduction is roughly rank 27,
+so the reproduction itself is worth more than every knob we tried in November.
+
+What actually produced 0.484 -> 0.487, per the upstream notebook: the code is byte-identical and
+the only change is attaching `popwenman/casmi26-scorer-train-v80` as the second neural scorer.
+v80 is the same public kit (`sanpier/casmi-spectrum-model-v1`) trained for **56 epochs instead of
+16** (diagnostic MRR@25 on a 256-candidate random-molecule holdout: 0.4844 -> 0.6603). One epoch
+is ~17 s at width 192, so the binding constraints are separate: 6175 s of `prepare` and the 9 h
+GPU budget, not compute per epoch.
+
+That reorders the levers. `flexonafft`'s evidence table says a standalone long-schedule scorer is
+*worse* than the 16-epoch one (0.461 vs 0.466 on the 0.477 base), so the win at 0.487 is the
+two-scorer z-blend, not a replacement. The blend is `0.5*z(public) + 0.5*z(ours)` on ranks 2-25
+with rank 1 untouched, and upstream measured 0.3/0.4/0.6 weights as *worse* (0.474) - but that
+sweep used the weak v2 scorer. With two comparable scorers the weight is worth re-measuring.
+
+Actions started today (two GPU slots, the account maximum):
+
+1. `kernel_c1_scorer_big` - our own scorer, same kit, same seed 20261023 (so the holdout
+   identities are identical to v80's and the 0.6603 is a paired comparison), wider
+   (256/4/8/256), 600 steps/epoch, up to 170 epochs, deadline-capped holdout and full refit.
+2. `kernel_v37` - upstream v589 pushed verbatim with v80 attached, to re-establish 0.487 on our
+   account and to prove the attach-and-swap path works from a private copy.
+3. `kernel_v38` (built, not pushed until the scorer finishes) - v37 plus our bundle. Two mandatory
+   edits: `_swap_to_ours` must rank the two attached bundles instead of taking the first one, and
+   it must write our `config_used.json` as `config.json` (upstream copies the kit's width-192
+   config, which cannot load a width-256 state_dict). `OURS_W` is a constant in cell 15.
+
+Order of play: v37 first (lock 0.487), then v38 at `OURS_W=0.5`, then a weight move only if the
+0.5 result is not worse than 0.487. Diagnostics are relative only - the holdout is a random-molecule
+256-candidate set, the board is 400 hidden molecules.
+
+### 2026-11-10 (later) - v37 submitted, GPU queue observed, second seed launched
+
+- Both kernels sat **37 minutes in the GPU queue** before starting (16:00 -> 16:37 UTC). That is the
+  normal cost of a busy CASMI evening, not an account or metadata problem: no other kernel of ours
+  was running, and an invalid dataset/metadata would fail in under a minute.
+- `casmi26-v37-lb487-repro` visible run took 188 s (the `COMMIT_MODE='fast'` path: dummy 400-row
+  submission, full pipeline deferred to the scoring rerun). Submitted as **58208778**, PENDING.
+  Four competition slots remain today.
+- `casmi26-scorer-big-a` started at 16:37 UTC. `prepare` is the fixed 6175 s stage, so no holdout
+  numbers before ~18:20 UTC.
+- `kaggle kernels logs` and `kaggle kernels output` both return **nothing for a RUNNING kernel** in
+  this CLI version, so live progress cannot be read; the watcher's progress lines are best-effort
+  and the first real diagnostic arrives only in the completed output. Plan GPU time accordingly.
+- With v37 finished, one GPU slot was free, so `casmi26-scorer-big-b` (identical recipe,
+  `seed=20261111`, `output=casmi_scorer_big_b`) was pushed to measure seed variance and to supply a
+  third ensemble member for the z-blend.
+
+---
+
+## 2026-11-11 - v37 confirmed 0.487; two bigger scorers done; v38/v39 submitted
+
+**Board.** `58208778` (v37, upstream v589 verbatim + v80) scored **0.487**. That is the
+public-notebook ceiling and roughly rank 27 of 5075 instead of the 800 we started the day at.
+Incumbent is now 0.487, not 0.480.
+
+**Our two scorers, trained overnight** (same kit, same 2.43 M spectra, width 256 / 4 layers /
+8 heads / embedding 256, 600 steps per epoch, 6175 s prepare each):
+
+| model | seed | holdout | best epoch | diagnostic MRR@25 | top1 | note |
+|---|---|---|---|---|---|---|
+| v80 (public, 56 ep) | 20261023 | same identities | 52 | 0.6603 | 0.529 | reference |
+| `big_a` | 20261023 | same identities | 67 | **0.7156** | 0.582 | **+0.055 paired** |
+| `big_b` | 20261111 | different identities | 63 | 0.6948 | 0.570 | not comparable to the row above |
+
+Both stopped on `patience=6`, so the gain is capacity (width), not just a longer schedule.
+Models load and score with the kit `model.py` under the merged config (5.01 M parameters each);
+that check was run locally before spending a submission, because the visible commit run does
+not execute the swap path.
+
+**Two submissions made today (3 slots left).**
+
+- `58228612` **v38** - the 0.487 notebook with our bundle swapped in. The pipeline's own neural
+  channel runs `big_a` (upstream sets `BUNDLE = OURS_BUNDLE` before `run_public_pipeline`), and
+  ranks 2-25 use `0.5*z(public kit) + 0.5*z(big_a)`. Two mandatory code changes were needed:
+  rank the attached bundles instead of taking the first one, and write our
+  `config_used.json` as `config.json` (the kit config pins width 192).
+- `58228650` **v39** - same pipeline, but the blend layer uses every attached scorer:
+  `0.25*z(public) + 0.25*z(v80) + 0.25*z(big_a) + 0.25*z(big_b)`. Note the intent was
+  0.25 public + 0.375/0.375 for our two; `_attached_bundles` also picked up v80, and since the
+  same code is already submitted, v39 is now "four scorers, public downweighted" - a useful
+  hypothesis either way, but not the one written in `kernel_v39/README.md`.
+
+**Prepared, not yet pushed:** `kernel_v40` (`w_mid` 0.85 and 0.65 over v38). Rationale:
+`w_mid=0.75` was tuned when the pipeline's neural channel was the 16-epoch public model; the
+channel now runs a model whose holdout MRR is +0.055 higher, so the optimal `w_mid` may be higher.
+
+**Queue lesson.** Live logs are unavailable for running kernels, and two hidden scoring reruns
+plus two training kernels exceed the account's 2-concurrent-session limit, so scoring reruns queue
+behind any new training run. Do not start a long training while submissions are unscored.
+
+### 2026-11-11 (evening) - all five slots spent, two more scorers training
+
+Quota: **5/5 used, 0 remaining**. Incumbent remains v37 at **0.487** until a new number lands.
+
+| ref | kernel | hypothesis |
+|---|---|---|
+| 58228612 | v38 | pipeline neural channel runs big-a; ranks 2-25 `0.5*z(public kit) + 0.5*z(big-a)` |
+| 58228650 | v39 | every attached scorer in the blend: `0.25*z(public) + 0.25*z(v80) + 0.25*z(a) + 0.25*z(b)` |
+| 58229302 | v40 | v38 with `w_mid` 0.75 -> 0.85 (more neural weight on ranks 2-25) |
+| 58229308 | v41 | v38 with `OURS_W` 0.5 -> 0.65 (lean on the stronger model) |
+| 58229377 | v42 | `0.25*z(public) + 0.375*z(a) + 0.375*z(b)`, v80 explicitly excluded |
+
+v42's visible log confirms the exclusion path works (`BUNDLE skipped casmi_spectrum_model_ours_v80`,
+`ATTACHED scorers: ['casmi_scorer_big_a', 'casmi_scorer_big_b']`). v39's log shows the opposite:
+v80 was silently included, which is why v39 is recorded as a four-scorer blend rather than the
+documented 0.25/0.375/0.375.
+
+**Constraint learned:** only **2 concurrent batch GPU sessions** are allowed, and the *push* is
+what gets rejected (`Maximum batch GPU session count of 2 reached`) - so variants must be pushed
+and submitted in pairs, not in one batch. Hidden scoring reruns do not occupy those sessions.
+
+**Two more scorers launched into the idle GPU time** (no submission dependency):
+
+- `casmi26-scorer-feat` - width 256 but `max_peaks 160` and `fp_bits 4096`, **same seed as big-a**,
+  so a holdout delta is attributable to the input resolution rather than to a new split. Both
+  big-a and big-b early-stopped around 0.70-0.72, so input resolution is the next capacity axis.
+- `casmi26-scorer-big-c` - third seed (20261112) of the exact big architecture, for blend diversity.
+
+Only v37's 0.487 is a real board number for our own models; the five pending reruns decide whether
+the scorer-quality branch pays. If v38/v41/v42 all land at or below 0.487, the conclusion is that a
++0.055 holdout gain does not transfer through this pipeline and the next work must be
+candidate generation, not the scorer.
+
+## 2026-11-12 - the scorer is a dead end; the headroom is the post-ranking overlay
+
+Quota: **0/5 used at the start of the session** (lifetime 41). Incumbent **0.487** (v37).
+
+### Yesterday's five, read off the board
+
+| ref | kernel | board |
+|---|---|---|
+| 58228612 | v38 (big-a in the neural channel) | 0.476 |
+| 58228650 | v39 (four-scorer blend) | 0.465 |
+| 58229302 | v40 (`w_mid` 0.85) | 0.476 |
+| 58229308 | v41 (`OURS_W` 0.65) | 0.473 |
+| 58229377 | v42 (v80 excluded) | 0.465 |
+
+Every swap away from v37's ensemble lost. The conclusion is not "train a better scorer" - big-a's
+holdout MRR was 0.69-0.70 against the public model, and the feat-resolution model finished at
+**0.7487** diagnostic MRR25, yet the same swap path lost 0.011. The scorer is not the binding
+constraint; the board bottleneck is downstream of ranking.
+
+### What the board actually rewards now
+
+The 2026-11-11 public forks of the same pipeline (zz3t3rn41 `peaks-to-structures-v2`, Ertugrul
+Ozer's dual-tier notebook, Adaptive Agent Systems' IONWRAITH v11) all claim 0.500+ and all share
+one new component: an **external measured MS/MS library rank-1 promotion** over the finished
+ranking. Three independent implementations, all off the same 0.487 core, all adding:
+
+1. adduct-aware neutral-mass alignment (11-adduct delta table) so `[M+Na]+` cannot collide with an
+   unrelated `[M+H]+` reference;
+2. strict adduct compatibility and a 15 ppm exact-mass sanity gate on the matched structure;
+3. InChIKey-14 rank protection and deduplication, with the existing library leader untouched when
+   the pipeline's own library confidence is already high;
+4. in the peaks-v2 fork, a multi-rank MSI Level-1 natural-product promotion and LOTUS augmentation
+   of the `np_map`;
+5. a recomposed v8 block: `V8='BOTH'` (mass prior + isomer reranker) at alpha 0.25 instead of
+   mass-only at alpha 1.0, `MASS_LEAD_OFF` 4.5 ppm, `LIB_HIT_GATE` 0.75, `NP_PROMO_MARGIN` 0.048.
+
+That is a mechanism the 0.487 lineage does not have, and it is exactly the kind of evidence-level
+promotion that fits an MRR@25 metric: a correct rank-1 promotion gains a full 1.0 - 1/r, a wrong
+one loses at most a slot already occupied by a decoy.
+
+### Today's slate (5 of 5, all built by `tools_build_apex.py`)
+
+| slot | kernel | what it is |
+|---|---|---|
+| 1 | `casmi26-v50-apex-adduct` | peaks-v2 verbatim + our v80 ensemble (the documented 0.500 recipe) |
+| 2 | `casmi26-v51-apex-dualtier` | Ozer dual-tier overlay + v80 (independent implementation) |
+| 3 | `casmi26-v52-apex-ionwraith` | IONWRAITH v11, `V8='MASS'`, dual-band overlay + v80 |
+| 4 | `casmi26-v53-apex-pocket` | new overlay with **our** v37 v8/prior constants (attribution hedge) |
+| 5 | `casmi26-v54-apex-recall` | v50 with `EXTLIB_TAU` 0.80 -> 0.75 (recall bracket) |
+
+Each notebook is copied whole (Apache-2.0, attribution preserved) and only cell 0 constants are
+edited, by asserted exact match. All five attach the same public dataset set as v37 plus the v80
+kernel source, and keep `COMMIT_MODE='fast'` so the visible run validates the wiring while the
+hidden rerun executes the full pipeline.
+
+Interpretation matrix: if v50/v51/v52 land in 0.50x, the overlay is real and the next work is its
+thresholds and reference-library coverage. If only v53 is >= 0.487, the new v8 constants are
+negative and the overlay is positive. If all five are <= 0.487, the public 0.500 titles do not
+transfer through this account, and the next branch must be candidate generation (recall of the
+true InChIKey-14 in the pool), not post-ranking.
+
+### Submitted (5 of 5)
+
+| ref | kernel | description |
+|---|---|---|
+| 58270559 | `casmi26-v50-apex-adduct` | peaks-v2 verbatim: adduct-aware extlib rank-1 promotion + MSI NP promotion + V8 BOTH alpha 0.25 + v80 |
+| 58270560 | `casmi26-v51-apex-dualtier` | dual-tier (rank-1/2) overlay, RR8 alpha 0.20 + v80 |
+| 58270739 | `casmi26-v52-apex-ionwraith` | IONWRAITH v11 dual-band overlay, V8 MASS only + v80 |
+| 58270741 | `casmi26-v53-apex-pocket` | new overlay with the exact v37 v8/prior constants (attribution hedge) |
+| 5827xxxx | `casmi26-v54-apex-recall` | **no-op: intended EXTLIB_TAU 0.75, but the overlay hardcodes `TAU = 0.80`** |
+
+Visible draft runs all confirm the wiring: the private swap found
+`/kaggle/input/notebooks/popwenman/casmi26-scorer-train-v80/...` and built the ensemble bundle,
+and the overlay loaded 200,724 extlib reference spectra plus MassBank harmonized for 324,884 total
+in ~40 s, with the fail-safe exception path around the call.
+
+**Mistake to record:** `EXTLIB_TAU` in cell 0 is not read by the overlay. Inside
+`_apex_extlib_overlay` the threshold is a local literal (`TAU = 0.80`, line 224 of the cell).
+v54 is therefore behaviourally identical to v50 and will score the same. A real threshold test
+must patch the function body, not cell 0. Cost: one slot, no score risk.
+
+Next: read the five board numbers. Decision rule as written above - 0.50x means the overlay
+transfers and the next work is its reference coverage and the hardcoded TAU; <= 0.487 everywhere
+means the public 0.500 titles do not reproduce on this account and candidate generation is the
+only remaining lever.
+
+**Correction to the table above:** `casmi26-v54-apex-recall` was built but *never submitted* (the run
+was pushed, then the slot was redirected). The five refs actually used are
+58270559 (v50), 58270560 (v51), 58270739 (v52), 58270741 (v53) and **58271214 (v55)**.
+
+`v55` is the real threshold probe: the overlay's function-local literal was edited
+`TAU = 0.80 -> 0.75` (asserted single match) and the visible draft log confirms
+`SUCCESS: 0 library matches (TAU=0.75, K=4)`, with 324,884 reference spectra loaded. v54 remains in
+the repo as a documented dead end (cell-0 `EXTLIB_TAU` is unused by this implementation).

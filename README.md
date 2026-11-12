@@ -159,3 +159,37 @@ V17 kernel version 2 completed its Kaggle visible run: 400 output rows, 12 visib
 V18 kernel version 2 completed its visible run (400 rows; 12 visible molecules processed; 12 lists and 1 top-1 changed) and was submitted as `57668919`, now pending hidden-test scoring. V15 (`57667149`), V16 (`57667157`), and V17 (`57668444`) are also pending. V19 kernel version 2 is already running at https://www.kaggle.com/code/sanjay0614/casmi26-v19-leader-safe-offset-1. Kaggle reports 1 submission remaining today.
 
 V19 kernel version 2 completed. Its visible run was a 12-molecule smoke path with placeholders for the other 388 rows. Submitted the kernel-backed code entry as 57669437; it is PENDING hidden-test inference and scoring. Kaggle reports 5 submissions used and 0 remaining today. V15-V19 are all pending; do not infer a score from the smoke output.
+
+---
+
+## 2026-11-12 - apex overlay slate (0.487 core + external-library promotion)
+
+Yesterday's five scorer swaps lost (0.465-0.476 against the 0.487 incumbent). The feat-resolution
+model's diagnostic holdout MRR25 reached **0.7487**, so ranking quality was not the bottleneck;
+the board penalises the same pipeline that scores well offline. The one new mechanism in the
+2026-11-11 public forks is a post-ranking **external measured MS/MS library promotion**: match the
+query spectrum against Takumu Hata's CC0 extlib (200,724 spectra) and MassBank harmonized
+(324,884 total), then promote a confident adduct-consistent, exact-mass-consistent match to rank 1,
+with InChIKey-14 protection and deduplication.
+
+Today's five submissions all keep the 0.487 neural ensemble (public kit + popwenman v80,
+`0.5*z + 0.5*z`). They vary only the overlay implementation:
+
+| ref | kernel | overlay |
+|---|---|---|
+| 58270559 | `casmi26-v50-apex-adduct` | peaks-to-structures-v2 verbatim: adduct-aware rank-1 promotion, MSI NP promotion, `V8='BOTH'` alpha 0.25 |
+| 58270560 | `casmi26-v51-apex-dualtier` | dual-tier (rank-1/rank-2) promotion, `RR8_ALPHA=0.20` |
+| 58270739 | `casmi26-v52-apex-ionwraith` | IONWRAITH v11 dual-band promotion, `V8='MASS'` (no reranker) |
+| 58270741 | `casmi26-v53-apex-pocket` | new overlay with the exact v37 v8/prior constants (attribution hedge) |
+| 58271214 | `casmi26-v55-apex-tau075` | v50 with the overlay's function-local threshold `0.80 -> 0.75` (recall bracket) |
+
+Every draft run confirmed the wiring before the slot was spent: the private swap resolved
+`/kaggle/input/notebooks/popwenman/casmi26-scorer-train-v80/...`, the overlay loaded all 324,884
+reference spectra in about 40 s, and the call is wrapped in a fail-safe that preserves the base
+`submission.csv`.
+
+**Engineering note:** `casmi26-peaks-to-structures-v2` exposes an `EXTLIB_TAU` constant in its
+configuration cell, but the overlay function never reads it - the threshold is a local literal
+(`TAU = 0.80`). `kernel_v54_apex_recall` was built against the unused constant and was therefore a
+no-op; it was not submitted. `kernel_v55_apex_tau075` patches the function body instead, with an
+assertion on the single match, and the log confirms `TAU=0.75` at runtime.
